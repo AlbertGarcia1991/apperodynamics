@@ -1,12 +1,5 @@
 class Elements {
 
-    // TODO: Double click open model (print on terminal to have signal)
-    // TODO: Polyline enters into graph drawing mode to draw rect lines
-    // TODO: Save localStorage
-    // TODO: Enable zoom
-    // TODO: Operator overloading
-    // TODO: Create Github
-
     constructor(hid, canvas) {
         this.hid = hid;
         this.canvas = canvas;
