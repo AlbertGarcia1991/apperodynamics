@@ -1,0 +1,35 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    background-color: blue;
+    text-align: center;
+    overflow: hidden;
+}
+
+#canvasHID {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 99;
+}
+
+#canvasRoulette {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 90;
+}
+
+#canvasElements {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: yellow;
+    display: block;
+    z-index: 50;
+}
