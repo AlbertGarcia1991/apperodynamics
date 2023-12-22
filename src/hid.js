@@ -43,7 +43,7 @@ class HID {
         const dir = Math.sign(e.deltaY);
         const step = 0.1;
         this.zoom += dir * step;
-        this.zoom = Math.max(1, Math.min(this.#maxZoom, this.zoom));
+        this.zoom = Math.max(0.1, Math.min(this.#maxZoom, this.zoom));
     }
 
     #eventListenerMouseOut(e) {

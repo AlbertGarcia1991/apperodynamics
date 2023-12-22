@@ -13,8 +13,17 @@ class Elements {
         this.panActive = false;
         
         this.zoom = 1;
-        this.elemSize = 60;
+        this.elemSize = 40;
         this.initElemSize = this.elemSize;
+
+        this.gridMainWidth = 1;
+        this.gridSecondaryWidth = 0.2;
+        this.gridSecondaryVerticalSpacingInit = 20;
+        this.gridSecondaryHorizontalSpacingInit = 20 ;
+    }
+
+    loadJSON(elementsSerialized) {
+        
     }
 
     update(ctx) {
@@ -39,12 +48,14 @@ class Elements {
     #isZooming() {
         if (this.zoom != this.hid.zoom) {
             this.zoom = this.hid.zoom;
-            this.elemSize = (this.initElemSize / this.zoom);
-            for (let i = 0; i < this.elements.length; i++) {
-                this.elements[i].loc.x = this.elements[i].loc.x / this.zoom;
-                this.elements[i].loc.y = this.elements[i].loc.y / this.zoom;
-            }
+            this.elemSize = (this.initElemSize * this.zoom);
+            // for (let i = 0; i < this.elements.length; i++) {
+            //     this.elements[i].loc.x = this.elements[i].loc.x * this.zoom;
+            //     this.elements[i].loc.y = this.elements[i].loc.y / this.zoom;
+            // }
         }
+        this.gridSecondaryVerticalSpacing = this.gridSecondaryVerticalSpacingInit * this.zoom;
+        this.gridSecondaryHorizontalSpacing = this.gridSecondaryHorizontalSpacingInit * this.zoom;
     }
 
     #checkNewElements() {
@@ -82,13 +93,16 @@ class Elements {
     }
 
     #isDragging() {
-        if (!this.isDragging && this.isHovering && this.mouseDownLeft) {
+        if (!this.isDragging && this.isHovering && this.mouseDownLeft && !this.mouseDownRight) {
             this.isDragging = true;
+            this.draggingOffset = new Point(
+                this.elements[this.nearestIndex].loc.x - this.mouseLoc.x,
+                this.elements[this.nearestIndex].loc.y - this.mouseLoc.y
+            );
         }
 
         if (this.isDragging && this.elements[this.nearestIndex]) {
-            this.elements[this.nearestIndex].loc = this.mouseLoc;
-
+            this.elements[this.nearestIndex].loc = add(this.mouseLoc, this.draggingOffset);
             if (!this.mouseDownLeft) {
                 this.isDragging = false;
             }
@@ -122,39 +136,50 @@ class Elements {
         this.nearestIndex = distances.indexOf(Math.min(...distances));
     }
 
+    #drawGrid(ctx) {
+        const centerViewport = {
+            "x": this.canvas.width / 2,
+            "y": this.canvas.height / 2
+        }
+        ctx.beginPath();
+        ctx.lineWidth = this.gridMainWidth;
+        // Main vertical
+        ctx.moveTo(centerViewport.x + this.panOffset.x, 0);
+        ctx.lineTo(centerViewport.x + this.panOffset.x, 2 * centerViewport.y);
+        // Main horizontal
+        ctx.moveTo(0, centerViewport.y + this.panOffset.y);
+        ctx.lineTo(2 * centerViewport.x, centerViewport.y + this.panOffset.y);
+        ctx.stroke();
+        // Secondary vertical
+        ctx.lineWidth = this.gridSecondaryWidth;
+        const nVerticalSecondGridLines = Math.floor(2 * centerViewport.x / this.gridSecondaryVerticalSpacing);
+        for (let i = 1; i <= Math.floor(nVerticalSecondGridLines / 2); i ++) {
+            ctx.moveTo(centerViewport.x + this.panOffset.x + this.gridSecondaryVerticalSpacing * i, 0);
+            ctx.lineTo(centerViewport.x + this.panOffset.x + this.gridSecondaryVerticalSpacing * i, 2 * centerViewport.y);
+        }
+        for (let i = 1; i <= Math.floor(nVerticalSecondGridLines / 2); i ++) {
+            ctx.moveTo(centerViewport.x + this.panOffset.x - this.gridSecondaryVerticalSpacing * i, 0);
+            ctx.lineTo(centerViewport.x + this.panOffset.x - this.gridSecondaryVerticalSpacing * i, 2 * centerViewport.y);
+        }
+        // Secondary horizontal
+        const nHorizontalSecondGridLines = Math.floor(2 * centerViewport.y / this.gridSecondaryVerticalSpacing);
+        for (let i = 1; i <= Math.floor(nHorizontalSecondGridLines / 2); i ++) {
+            ctx.moveTo(0, centerViewport.y + this.panOffset.y + this.gridSecondaryVerticalSpacing * i);
+            ctx.lineTo(2 * centerViewport.x, centerViewport.y + this.panOffset.y + this.gridSecondaryVerticalSpacing * i);
+        }
+        for (let i = 1; i <= Math.floor(nHorizontalSecondGridLines / 2); i ++) {
+            ctx.moveTo(0, centerViewport.y + this.panOffset.y - this.gridSecondaryVerticalSpacing * i);
+            ctx.lineTo(2 * centerViewport.x, centerViewport.y + this.panOffset.y - this.gridSecondaryVerticalSpacing * i);
+        }
+        ctx.stroke();
+        
+    }
+
     #draw(ctx) {
+        this.#drawGrid(ctx);
+
         for (let i = 0; i < this.elements.length; i++) {
-            const elemImg = new Image();
-            let height = this.elemSize;
-            switch (this.elements[i].type) {
-                case 1:
-                    elemImg.src = "imgs/source.png";
-                    break;
-                case 2:
-                    elemImg.src = "imgs/vortex.png";
-                    break;
-                case 3:
-                    elemImg.src = "imgs/dipole.png";
-                    break;
-                case 4:
-                    elemImg.src = "imgs/corner.png";
-                    break;
-                case 5:
-                    elemImg.src = "imgs/oval.png";
-                    height = this.elemSize / 2;
-                    break;
-                case 6:
-                    elemImg.src = "imgs/cylinder.png";
-                    break;
-                case 7:
-                    elemImg.src = "imgs/polyline.png";
-                    height = this.elemSize / 2;
-                    break;
-                case 8:
-                    elemImg.src = "imgs/bezier.png";
-                    height = this.elemSize / 2;
-                    break;
-            }
+            
             if (this.isHovering && this.nearestIndex == i) {
                 ctx.globalAlpha = 0.5;
             }
@@ -162,11 +187,11 @@ class Elements {
                 ctx.globalAlpha = 1;
             }
             ctx.drawImage(
-                elemImg,
-                this.elements[i].loc.x - this.elemSize / 2 + this.panOffset.x,
-                this.elements[i].loc.y - this.elemSize / 2 + this.panOffset.y,
+                getImage(this.elements[i].type),
+                this.elements[i].loc.x + this.panOffset.x - this.elemSize / 2,
+                this.elements[i].loc.y + this.panOffset.y - this.elemSize / 2,
                 this.elemSize,
-                height,
+                this.elemSize,
             );
         }
     }

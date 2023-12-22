@@ -9,6 +9,20 @@
         <canvas id="canvasRoulette"></canvas>
         <canvas id="canvasElements"></canvas>
 
+        <div class="modal" id="modal_newElement">
+            <form>
+                <h1 id="modal_newElement_title" style="padding: 10px;">ELEMENT</h1>
+                <div id="modal_newElement_inputDiv">
+                    <body id="modal_newElement_label">Strenght</body> 
+                    <input id="modal_newElement_input" type="number" step="any" style="width: 100px;">
+                </div>
+                <div id="modal_newElement_btnDiv" style="position: absolute; right: 0; bottom: 0; margin: 5px;">
+                    <button id="modal_newElement_btnAccept">ACCEPT</button>
+                    <button id="modal_newElement_btnRemove">REMOVE</button>
+                </div>
+            </form>
+        </div>
+
         <script src="src/hid.js"></script>
         <script src="src/utils.js"></script>
         <script src="src/primitives.js"></script>

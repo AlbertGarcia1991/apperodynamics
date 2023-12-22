@@ -94,50 +94,14 @@ class Roulette {
         }
     }
 
-    #getImageAndHeight(idx) {
-        const img = new Image();
-        let height = this.btnImgDiameter;
-        switch (idx) {
-            case 1:
-                img.src = "imgs/source.png";
-                break;
-            case 2:
-                img.src = "imgs/vortex.png";
-                break;
-            case 3:
-                img.src = "imgs/dipole.png";
-                break;
-            case 4:
-                img.src = "imgs/corner.png";
-                break;
-            case 5:
-                img.src = "imgs/oval.png";
-                height = this.btnImgDiameter / 2;
-                break;
-            case 6:
-                img.src = "imgs/cylinder.png";
-                break;
-            case 7:
-                img.src = "imgs/polyline.png";
-                height = this.btnImgDiameter / 2;
-                break;
-            case 8:
-                img.src = "imgs/bezier.png";
-                height = this.btnImgDiameter / 2;
-                break;
-        }
-        return {"img": img, "height": height};
-    }
-
     #btnClickAttachImg(ctx) {
         if (this.btnClickIdx > 0 && !this.isHovering) {
-            const btnImg = this.#getImageAndHeight(this.btnClickIdx);
             ctx.drawImage(
-                btnImg.img,
+                getImage(this.btnClickIdx),
                 this.mouseLoc.x - this.btnImgDiameter / 2,
                 this.mouseLoc.y - this.btnImgDiameter / 2,
                 this.btnImgDiameter,
-                btnImg.height,
+                this.btnImgDiameter,
             );
         }
     }
@@ -228,15 +192,14 @@ class Roulette {
                 ctx.globalAlpha = 1;
             }
 
-            const img = this.#getImageAndHeight(i + 1);
             const centerAngle = (endAngle + startAngle) / 2;
             // console.log(rad2deg(centerAngle));
             ctx.drawImage(
-                img.img,
+                getImage(i + 1),
                 this.center.x + ((this.extRad + this.intRad) / 2) * Math.cos(-centerAngle) - this.btnImgDiameter / 2,
-                this.center.y + ((this.extRad + this.intRad) / 2) * Math.sin(centerAngle) - img.height / 2,
+                this.center.y + ((this.extRad + this.intRad) / 2) * Math.sin(centerAngle) - this.btnImgDiameter / 2,
                 this.btnImgDiameter,
-                img.height,
+                this.btnImgDiameter,
             );
         }
 

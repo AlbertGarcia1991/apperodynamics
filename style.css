@@ -33,3 +33,16 @@ html, body {
     display: block;
     z-index: 50;
 }
+
+.modal {
+    display: none;
+    background: green;
+    position: absolute;
+    float: left;
+    width: 30%;
+    height: 15%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+  }

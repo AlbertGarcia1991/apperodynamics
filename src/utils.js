@@ -10,7 +10,11 @@ function getModulus(point) {
 }
 
 function add(point1, point2) {
-    return new Point(point2.x + point1.x, point2.y + point1.y);
+    return new Point(point1.x + point2.x, point1.y + point2.y);
+}
+
+function addScalar(point1, k) {
+    return new Point(point1.x + k, point1.y + k);
 }
 
 function subtract(point1, point2) {
@@ -37,4 +41,35 @@ function rad2deg(angle) {
 function remainderMod(n, d) {
     var q = parseInt(n / d);  // truncates to lower magnitude
     return n - (d * q);
-  }
+}
+
+function getImage(type) {
+    const img = new Image();
+    switch (type) {
+        case 1:
+            img.src = "imgs/source.png";
+            break;
+        case 2:
+            img.src = "imgs/vortex.png";
+            break;
+        case 3:
+            img.src = "imgs/dipole.png";
+            break;
+        case 4:
+            img.src = "imgs/corner.png";
+            break;
+        case 5:
+            img.src = "imgs/oval.png";
+            break;
+        case 6:
+            img.src = "imgs/cylinder.png";
+            break;
+        case 7:
+            img.src = "imgs/polyline.png";
+            break;
+        case 8:
+            img.src = "imgs/bezier.png";
+            break;
+    }
+    return img;
+}
