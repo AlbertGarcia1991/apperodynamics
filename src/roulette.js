@@ -76,9 +76,7 @@ class Roulette {
                 }
                 else {
                     if (this.btnClickFlag) {
-                        this.elements.elements.push(
-                            {"type": this.btnClickIdx, "loc": this.mouseLoc, "isNew": true}
-                        );
+                        this.elements.addElement({"type": this.btnClickIdx, "locViewport": this.mouseLoc, "isNew": true});
                     }
                     this.btnClickIdx = null;
                     this.btnClickFlag = false;

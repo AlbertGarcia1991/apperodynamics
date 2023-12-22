@@ -9,12 +9,20 @@ const ctxElements = canvasElements.getContext("2d");
 
 const hid = new HID(window, canvasHID);
 const elements = new Elements(hid, canvasElements);
-const elementsSerialized = localStorage.getItem("elements");
-const elementsInfo = elementsSerialized ? JSON.parse(elementsSerialized) : null;
-elements.elements = elementsInfo ? elements.loadJSON(elementsInfo) : [];
+
+function clearLocalStorage() {
+    localStorage.clear("elements");
+    elements.elements.length = 0;
+}
+
+const elementsStored = localStorage.getItem("elements");
+let elementsSerialized = elementsStored ? JSON.parse(elementsStored) : null;
+if (elementsSerialized) {
+    elements.loadJSON(elementsSerialized)
+}
+
 const roulette = new Roulette(hid, canvasRoulette, elements);
 
-let nElements = 0;
 function animate() {
     canvasHID.width = window.innerWidth;
     canvasHID.height = window.innerHeight;
@@ -25,11 +33,6 @@ function animate() {
 
     if (hid.mouseDownLeft && !hid.mouseDownLeft1Second) {
         hid.mouseHold();
-    }
-
-    if (nElements != elements.elements.length) {
-        nElements = elements.elements.length;
-        localStorage.setItem("elements", JSON.stringify(elements.elements));
     }
 
     roulette.update(ctxRoulette);
