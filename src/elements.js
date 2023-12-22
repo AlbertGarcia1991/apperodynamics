@@ -9,7 +9,12 @@ class Elements {
         this.isHovering = false;
         this.isDragging = false;
         
-        this.panOffset = new Point(0, 0);
+        this.pViewport = new Point(this.canvas.width, this.canvas.height);
+        this.pCenterViewport = dotScalar(this.pViewport, 0.5);
+        this.pCenterRef = this.pCenterViewport.copy();
+        this.pMouseRef = new Point();
+
+        this.panStart = new Point();
         this.panActive = false;
         
         this.zoom = 1;
@@ -21,7 +26,7 @@ class Elements {
         this.gridSecondaryVerticalSpacingInit = 50;
         this.gridSecondaryHorizontalSpacingInit = 20;
 
-        this.oldCenterViewport = Date.now();
+        this.tStart = Date.now();
     }
 
     loadJSON(elementsSerialized) {
@@ -32,80 +37,69 @@ class Elements {
     }
 
     addElement(element) {
-        this.elements.push(element);
+        this.elements.push({
+            "type": element.type,
+            "pViewport": element.locViewport,
+            "pRef": this.#pFromCenter(element.locViewport)
+        });
         localStorage.setItem("elements", JSON.stringify(this.elements));
     }
 
     update(ctx) {
-        // Get position of mouse
-        this.mouseLoc = subtract(this.panOffset, this.hid.mouseLoc);
+        this.pViewport.update(this.canvas.width, this.canvas.height);
+        this.pCenterViewport = dotScalar(this.pViewport, 0.5);
+        this.pMouseRef = this.#pFromCenter(this.pCenterRef);
 
-        // Get mouse buttons
-        this.mouseDownLeft = this.hid.mouseDownLeft;
-        this.mouseDownCenter = this.hid.mouseDownCenter;
-        this.mouseDownRight = this.hid.mouseDownRight;
-        this.mouseMove = this.hid.mouseMove;
-
-        this.#checkNewElements();
         this.#isZooming();
         this.#isHovering();
         this.#isRemoving();
         this.#isDragging();
         this.#isPanning();
-        this.#draw(ctx);
-    }
+        this.#drawGrid(ctx);
+        this.#drawElements(ctx);
 
-    #isZooming() {
-        if (this.zoom != this.hid.zoom) {
-            this.zoom = this.hid.zoom;
-            this.elemSize = (this.initElemSize * this.zoom);
-            for (let i = 0; i < this.elements.length; i++) {
-                const center = new Point(
-                    this.elements[i].locViewport.x - this.canvas.width / 2,
-                    this.elements[i].locViewport.y - this.canvas.height / 2
-                );
-                console.log(center);
-                // this.elements[i].locViewport.x = this.elements[i].locViewport.x * this.zoom;
-                // this.elements[i].locViewport.y = this.elements[i].locViewport.y / this.zoom;
-            }
-        }
-        this.gridSecondaryVerticalSpacing = this.gridSecondaryVerticalSpacingInit * this.zoom;
-        this.gridSecondaryHorizontalSpacing = this.gridSecondaryHorizontalSpacingInit * this.zoom;
-    }
-
-    #checkNewElements() {
-        for (let i = 0; i < this.elements.length; i++) {
-            if (this.elements[i].isNew) {
-                this.elements[i].locViewport = subtract(this.panOffset, this.elements[i].locViewport);
-                this.elements[i].isNew = false;
-                this.elements[i].locAbs = new Point(
-                    this.elements[i].locViewport.x - this.canvas.width / 2,
-                    this.elements[i].locViewport.y - this.canvas.height / 2,
-                );
-            }
-        }
+        // if ((Date.now() - this.tStart > 200) && this.hid.mouseDownLeft) {
+        //     console.log(this.pCenterViewport, this.pCenterRef, this.hid.mouseLoc, this.pMouseRef, this.zoom);
+        //     this.tStart = Date.now();
+        // }
     }
 
     #isPanning() {
-        if (this.mouseDownCenter) {
+        if (this.hid.mouseDownCenter) {
             if (!this.panActive) {
-                this.panStart = this.mouseLoc;
+                this.panStart = this.hid.mouseLoc;
                 this.panActive = true;
+            }
+            else {
+                if (this.hid.mouseMove) {
+                    this.panDelta = subtract(this.hid.mouseLoc, this.panStart);
+                    this.panStart.clone(this.hid.mouseLoc);
+                    this.pCenterRef.subtract(this.panDelta);
+                    this.elements.forEach(element => element.pViewport.subtract(this.panDelta));
+                }
             }
         }
         else {
             if (this.panActive) {
                 this.panActive = false;
+                this.panDelta.reset();
             }
-        }
-
-        if (this.panActive && this.mouseMove) {
-            this.panOffset = add(this.panOffset, subtract(this.panStart, this.mouseLoc));
         }
     }
 
+    #isZooming() {
+        this.elements.forEach(element => {
+            element.pViewport.x += element.pRef.x * (this.hid.zoom - this.zoom);
+            element.pViewport.y -= element.pRef.y * (this.hid.zoom - this.zoom);
+        });
+        this.zoom = this.hid.zoom;
+        this.elemSize = (this.initElemSize * this.zoom);
+        this.gridSecondaryVerticalSpacing = this.gridSecondaryVerticalSpacingInit * this.zoom;
+        this.gridSecondaryHorizontalSpacing = this.gridSecondaryHorizontalSpacingInit * this.zoom;
+    }
+
     #isRemoving() {
-        if (this.isHovering && this.mouseDownRight) {
+        if (this.isHovering && this.hid.mouseDownRight) {
             this.elements.splice(this.nearestIndex, 1);
             this.isDragging = false;
             if (this.elements.length == 0) {
@@ -119,20 +113,22 @@ class Elements {
     }
 
     #isDragging() {
-        if (!this.isDragging && this.isHovering && this.mouseDownLeft && !this.mouseDownRight) {
+        if (!this.isDragging && this.isHovering && this.hid.mouseDownLeft && !this.hid.mouseDownRight) {
             this.isDragging = true;
-            this.draggingOffset = new Point(
-                this.elements[this.nearestIndex].locViewport.x - this.mouseLoc.x,
-                this.elements[this.nearestIndex].locViewport.y - this.mouseLoc.y
-            );
+            this.draggingElementIdx = this.nearestIndex;
+            this.draggingStart = subtract(this.elements[this.draggingElementIdx].pViewport, this.hid.mouseLoc)
+            console.log(this.draggingStart);
         }
 
-        if (this.isDragging && this.elements[this.nearestIndex]) {
-            this.elements[this.nearestIndex].locViewport = add(this.mouseLoc, this.draggingOffset);
-            if (!this.mouseDownLeft) {
+        if (this.isDragging) {
+            this.elements[this.draggingElementIdx].pViewport = subtract(this.draggingStart, this.hid.mouseLoc);
+            // this.elements[this.draggingElementIdx].pRef = add(this.hid.mouseLoc, this.draggingOffset);
+            if (!this.hid.mouseDownLeft) {
                 localStorage.setItem("elements", JSON.stringify(this.elements));
                 this.isDragging = false;
+                // console.log(this.elements[this.draggingElementIdx].pRef.print());
             }
+            this.draggingStart.reset();
         }
     }
 
@@ -147,79 +143,67 @@ class Elements {
             this.nearestIndex = null;
         }
         try {
-        if (this.nearestIndex != null) {
-            if (getDistancePoint2Point(this.mouseLoc, this.elements[this.nearestIndex].locViewport) < this.elemSize) {
-                this.isHovering = true;
+            if (this.nearestIndex != null) {
+                if (getDistancePoint2Point(this.hid.mouseLoc, this.elements[this.nearestIndex].pViewport) < this.elemSize) {
+                    this.isHovering = true;
+                }
+                else {
+                    this.isHovering = false;
+                }
             }
-            else {
-                this.isHovering = false;
-            }
-        }
         } catch(err) {}
     }
 
     #getNearest() {
         const distances = [];
-        for (let i = 0; i < this.elements.length; i++) {
-            distances.push(getDistancePoint2Point(this.mouseLoc, this.elements[i].locViewport));
-        }
+        this.elements.forEach(element => {
+            distances.push(getDistancePoint2Point(this.hid.mouseLoc, element.pViewport))
+        });
         this.nearestIndex = distances.indexOf(Math.min(...distances));
     }
 
     #drawGrid(ctx) {
-        this.centerViewport = new Point(this.canvas.width / 2, this.canvas.height / 2);
-        this.centerAbs = add(this.centerViewport, this.panOffset);
-        if (Date.now() - this.oldCenterViewport > 1000) {
-            console.log("HERE", this.centerViewport, this.centerAbs);
-            this.oldCenterViewport = Date.now();
-        }
         ctx.beginPath();
         ctx.lineWidth = this.gridMainWidth;
         // Main vertical
-        ctx.moveTo(this.centerViewport.x + this.panOffset.x, 0);
-        ctx.lineTo(this.centerViewport.x + this.panOffset.x, 2 * this.centerViewport.y);
+        ctx.moveTo(this.pCenterRef.x, 0);
+        ctx.lineTo(this.pCenterRef.x, this.pViewport.y);
         // Main horizontal
-        ctx.moveTo(0, this.centerViewport.y + this.panOffset.y);
-        ctx.lineTo(2 * this.centerViewport.x, this.centerViewport.y + this.panOffset.y);
+        ctx.moveTo(0, this.pCenterRef.y);
+        ctx.lineTo(this.pViewport.x, this.pCenterRef.y);
         ctx.stroke();
+
         // Secondary vertical
         ctx.lineWidth = this.gridSecondaryWidth;
-        const nVerticalSecondGridLines = Math.floor(2 * this.centerViewport.x / this.gridSecondaryVerticalSpacing);
-
-        let currX = this.centerAbs.x;
-        while (currX < this.canvas.width) {
+        let currX = this.pCenterRef.x;
+        while (currX < this.pViewport.x) {
             ctx.moveTo(currX + this.gridSecondaryVerticalSpacing, 0);
-            ctx.lineTo(currX + this.gridSecondaryVerticalSpacing, this.canvas.height);  
+            ctx.lineTo(currX + this.gridSecondaryVerticalSpacing, this.pViewport.y);  
             currX += this.gridSecondaryVerticalSpacing;
         }
-        currX = this.centerAbs.x;
+        currX = this.pCenterRef.x;
         while (currX > 0) {
             ctx.moveTo(currX - this.gridSecondaryVerticalSpacing, 0);
-            ctx.lineTo(currX - this.gridSecondaryVerticalSpacing, this.canvas.height);  
+            ctx.lineTo(currX - this.gridSecondaryVerticalSpacing, this.pViewport.y);  
             currX -= this.gridSecondaryVerticalSpacing;
         }
-        let currY = this.centerAbs.y;
-        while (currY < this.canvas.height) {
+        let currY = this.pCenterRef.y;
+        while (currY < this.pViewport.y) {
             ctx.moveTo(0, currY + this.gridSecondaryVerticalSpacing);
-            ctx.lineTo(this.canvas.width, currY + this.gridSecondaryVerticalSpacing);
+            ctx.lineTo(this.pViewport.x, currY + this.gridSecondaryVerticalSpacing);
             currY += this.gridSecondaryVerticalSpacing;
         }
-        currY = this.centerAbs.y;
+        currY = this.pCenterRef.y;
         while (currY > 0) {
             ctx.moveTo(0, currY - this.gridSecondaryVerticalSpacing);
-            ctx.lineTo(2 * this.centerViewport.x, currY - this.gridSecondaryVerticalSpacing);
+            ctx.lineTo(this.pViewport.x, currY - this.gridSecondaryVerticalSpacing);
             currY -= this.gridSecondaryVerticalSpacing;
         }
         ctx.stroke();
-        
-        
     }
 
-    #draw(ctx) {
-        this.#drawGrid(ctx);
-
+    #drawElements(ctx) {
         for (let i = 0; i < this.elements.length; i++) {
-            
             if (this.isHovering && this.nearestIndex == i) {
                 ctx.globalAlpha = 0.5;
             }
@@ -228,11 +212,20 @@ class Elements {
             }
             ctx.drawImage(
                 getImage(this.elements[i].type),
-                this.elements[i].locViewport.x + this.panOffset.x - this.elemSize / 2,
-                this.elements[i].locViewport.y + this.panOffset.y - this.elemSize / 2,
+                this.elements[i].pViewport.x - this.elemSize / 2,
+                this.elements[i].pViewport.y - this.elemSize / 2,
                 this.elemSize,
                 this.elemSize,
             );
         }
+    }
+
+    #pFromCenter(point) {
+        const p = new Point(
+            point.x - this.pCenterRef.x,
+            this.pCenterRef.y - point.y
+        );
+        p.dotScalar(1 / this.zoom)
+        return p;
     }
 }

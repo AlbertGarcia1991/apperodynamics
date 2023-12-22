@@ -1,14 +1,10 @@
-1. Add Zoom functionality to always keep center of window as focal point
-2. Operator overloading to sum and subtract points
-3. Create localStorage
-4. Refactor to always keep real_pos and view_pos of elements
+>* Dragging has the offset between element centre and mouse
+* Dragging does not update pRef
+* Dragging affected by zoom
 5. Compute potential solutions velocity field -> Solver module
-6. Replace icons with circles
-7. Correct element shift when selecting it to drag
 8. Create solution canvas
 9. Show velocity field on solution canvas with colormap
 10. Add movement to arrows on solution canvas
-11. Add grid lines on solution canvas
 12. Add freestream with a min viz
 13. Compute pressure field
 14. Compute forces over solutions

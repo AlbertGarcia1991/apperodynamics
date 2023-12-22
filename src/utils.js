@@ -17,6 +17,10 @@ function addScalar(point1, k) {
     return new Point(point1.x + k, point1.y + k);
 }
 
+function dotScalar(point1, k) {
+    return new Point(point1.x * k, point1.y * k);
+}
+
 function subtract(point1, point2) {
     return new Point(point2.x - point1.x, point2.y - point1.y);
 }
