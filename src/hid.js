@@ -1,5 +1,5 @@
 class HID {
-    #maxZoom = 5
+    #maxZoom = 10
 
     constructor(window, canvas) {
         this.window = window;
@@ -15,7 +15,7 @@ class HID {
         this.mouseDownCenter = false;
         this.mouseDownRight = false;
         this.mouseMove = false;
-        this.zoom = 1;
+        this.zoom = 3;
         this.keyDown = null;
 
         this.#addEventListeners();
@@ -43,7 +43,7 @@ class HID {
         const dir = Math.sign(e.deltaY);
         const step = 0.1;
         this.zoom += dir * step;
-        this.zoom = Math.max(0.1, Math.min(this.#maxZoom, this.zoom));
+        this.zoom = Math.max(1, Math.min(this.#maxZoom, this.zoom));
     }
 
     #eventListenerMouseOut(e) {

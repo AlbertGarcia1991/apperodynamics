@@ -8,18 +8,23 @@ class Point {
         return `{${this.x},${this.y}}`;
     }
 
-    copy() {
+    returnCopy() {
         return new Point(this.x, this.y);
     }
 
-    reset() {
+    clear() {
         this.x = 0;
         this.y = 0
     }
 
-    update(x, y) {
+    setValues(x, y) {
         this.x = x;
         this.y = y;
+    }
+
+    setValuesLikePoint(point) {
+        this.x = point.x;
+        this.y = point.y;
     }
 
     add(point) {
@@ -32,18 +37,9 @@ class Point {
         this.y -= point.y;
     }
 
-    clone(point) {
-        this.x = point.x;
-        this.y = point.y;
-    }
 
     dotScalar(k) {
         this.x *= k;
         this.y *= k;
-    }
-
-    addScalar(k) {
-        this.x += k;
-        this.y += k;
     }
 }

@@ -9,24 +9,20 @@ function getModulus(point) {
     return Math.hypot(point.x, point.y);
 }
 
-function add(point1, point2) {
+function getAdd(point1, point2) {
     return new Point(point1.x + point2.x, point1.y + point2.y);
 }
 
-function addScalar(point1, k) {
-    return new Point(point1.x + k, point1.y + k);
-}
-
-function dotScalar(point1, k) {
+function getDotScalar(point1, k) {
     return new Point(point1.x * k, point1.y * k);
 }
 
-function subtract(point1, point2) {
-    return new Point(point2.x - point1.x, point2.y - point1.y);
+function getSubtract(point1, point2) {
+    return new Point(point1.x - point2.x, point1.y - point2.y);
 }
 
 function getDistancePoint2Point(point1, point2) {
-    const distance_vector = subtract(point1, point2);
+    const distance_vector = getSubtract(point1, point2);
     return getModulus(distance_vector);
 }
 
@@ -40,11 +36,6 @@ function getAngle(point, rad = true) {
 
 function rad2deg(angle) {
     return angle * (360 / (2 * Math.PI));
-}
-
-function remainderMod(n, d) {
-    var q = parseInt(n / d);  // truncates to lower magnitude
-    return n - (d * q);
 }
 
 function getImage(type) {
@@ -77,3 +68,30 @@ function getImage(type) {
     }
     return img;
 }
+
+class Queue {
+    constructor() {
+      this.elements = {};
+      this.head = 0;
+      this.tail = 0;
+    }
+    enqueue(element) {
+      this.elements[this.tail] = element;
+      this.tail++;
+    }
+    dequeue() {
+      const item = this.elements[this.head];
+      delete this.elements[this.head];
+      this.head++;
+      return item;
+    }
+    peek() {
+      return this.elements[this.head];
+    }
+    get length() {
+      return this.tail - this.head;
+    }
+    get isEmpty() {
+      return this.length === 0;
+    }
+  }

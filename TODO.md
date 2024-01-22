@@ -1,4 +1,3 @@
->* Dragging has the offset between element centre and mouse
 * Dragging does not update pRef
 * Dragging affected by zoom
 5. Compute potential solutions velocity field -> Solver module

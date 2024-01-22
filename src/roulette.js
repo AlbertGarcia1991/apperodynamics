@@ -76,7 +76,7 @@ class Roulette {
                 }
                 else {
                     if (this.btnClickFlag) {
-                        this.elements.addElement({"type": this.btnClickIdx, "locViewport": this.mouseLoc});
+                        this.elements.addElement({"type": this.btnClickIdx, "pView": this.mouseLoc});
                     }
                     this.btnClickIdx = null;
                     this.btnClickFlag = false;
@@ -127,12 +127,12 @@ class Roulette {
     #isDragging() {
         if (this.isHovering && this.mouseRightDown) {
             if (!this.isDragging) {
-                this.dragInitMouseOffset = subtract(this.mouseLoc, this.center);
+                this.dragInitMouseOffset = getSubtract(this.center, this.mouseLoc);
                 this.isDragging = true;
             }
         }
         if (this.mouseRightDown && this.isDragging) {
-            const newCenter = add(this.mouseLoc, this.dragInitMouseOffset);
+            const newCenter = getAdd(this.hid.mouseLoc, this.dragInitMouseOffset);
             if (newCenter.y > this.maxY) {
                 newCenter.y = this.maxY;
             }
@@ -205,7 +205,7 @@ class Roulette {
     }
 
     #getBtnQuadrant() {
-        const angle = getAngle(subtract(this.mouseLoc, this.center));
+        const angle = getAngle(getSubtract(this.center, this.mouseLoc));
         let btn = 1 + (this.nButtons - parseInt((angle + this.deltaAngle / 2) / this.deltaAngle));
         if (btn > this.nButtons) {
             btn = 1;
